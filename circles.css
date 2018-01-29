@@ -1,0 +1,9 @@
+* {
+ 	margin: 0px;
+ 	padding: 0px;
+}
+svg {
+	width: 60%;
+	height: 80%;
+	border-style: solid;
+}
