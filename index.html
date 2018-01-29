@@ -11,7 +11,7 @@
 	function Circle(cx, cy, html_id, radius)
 	{
 		var html_id = html_id;
-		this.info = { cx: cx,  cy: cy };
+		this.info = { cx: cx,  cy: cy, radius: radius };
 		
 		// private function that generates a random number
 		var randomNumberBetween = function(min, max){
@@ -29,7 +29,7 @@
 			var circle = makeSVG('circle', 
 				{ 	cx: this.info.cx,
 				  	cy: this.info.cy,
-				  	r:  radius,
+				  	r:  this.info.radius,
 				  	id: html_id,
 				  	style: "fill: black"
 				});
@@ -40,11 +40,11 @@
 			var el = document.getElementById(html_id);
 
 			//see if the circle is going outside the browser. if it is, reverse the velocity
-			if( this.info.cx+radius > svg.clientWidth || this.info.cx-radius < 0)
+			if( this.info.cx+this.info.radius > svg.clientWidth || this.info.cx-this.info.radius < 0)
 			{
 				this.info.velocity.x = this.info.velocity.x * -1;
 			}
-			if( this.info.cy+radius > svg.clientHeight || this.info.cy-radius < 0)
+			if( this.info.cy+this.info.radius > svg.clientHeight || this.info.cy-this.info.radius < 0)
 			{
 				this.info.velocity.y = this.info.velocity.y * -1;
 			}
@@ -54,6 +54,35 @@
 
 			el.setAttribute("cx", this.info.cx);
 			el.setAttribute("cy", this.info.cy);
+
+		}
+
+		this.collideAdvanced = function(circle2) {
+			var d = closestPointOnLine(this.info.cx, 
+				this.info.cy, 
+	    		this.info.cx + this.info.velocity.x, 
+	    		this.info.cy + this.info.velocity.y, 
+	    		circle2.info.cx, circle2.info.cy); 
+			var closestdistsq = Math.pow(circle2.info.cx - d.x, 2)
+				+ Math.pow(circle2.info.cy - d.y, 2);
+
+			if (closestdistsq <= Math.pow(this.info.r + circle2.info.r, 2)) {
+				console.log('A collision!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+				return true;
+			    // a collision has occurred
+			} else { 
+			    // no collision has occurred
+		    	console.log('No collision!');
+		    	return false;
+			}
+
+		}
+
+		this.collideEasy = function (circle2) {
+			var x = this.info.cx-circle2.info.cx;
+			var y = this.info.cy-circle2.info.cy;
+			var distance = Math.sqrt(x * x + y * y);	
+			return (distance <= this.info.radius + circle2.info.radius);
 		}
 
 		//creates the SVG element and returns it
@@ -69,6 +98,30 @@
 	    this.initialize();
 	}
 
+	function closestPointOnLine(lx1, ly1, lx2, ly2, x0, y0)
+	{ 
+		var A1 = ly2 - ly1; 
+		var B1 = lx1 - lx2; 
+		var C1 = (ly2 - ly1)*lx1 + (lx1 - lx2)*ly1; 
+		var C2 = (-1*B1*x0) + A1*y0;
+		var det = A1*A1 - (-1*B1*B1); 
+		var cx = 0; 
+		var cy = 0;
+
+		if (det != 0) { 
+			cx = ((A1*C1 - B1*C2)/det); 
+			cy = ((A1*C2 - (-1*B1*C1))/det); 
+		} else { 
+			cx = x0;
+			cy = y0;
+		}
+		var point = {
+			x: cx,
+			y: cy
+		};
+		return point; 
+	}
+
 	function PlayGround()
 	{
 		var counter = 0;  //counts the number of circles created
@@ -80,12 +133,25 @@
 			{
 				circles[circle].update(1);
 			}
+			for(circle in circles)
+			{
+				var currentCircle = circles[circle];
+				for (collideCircle in circles)
+				{
+					if (collideCircle == circle)
+					{
+						continue;
+					}
+					if (currentCircle.collideEasy(circles[collideCircle])) {
+					}
+				}	
+			}
 		}
 
 		this.createNewCircle = function(x,y,time_pressed=100) {
 			var new_circle = new Circle(x,y,counter++,(time_pressed/10));
 			circles.push(new_circle);
-			console.log('created a new circle!', new_circle);
+			//console.log('created a new circle!', new_circle);
 		}
 
 		//create one circle when the game starts
@@ -107,7 +173,7 @@
 
 	document.onmouseup = function(e){
 		time_pressed = getTime() - mousedown_time;
-		console.log('You held your mouse down for', time_pressed, 'miliseconds.');
+		//console.log('You held your mouse down for', time_pressed, 'miliseconds.');
 		playground.createNewCircle(e.x,e.y,time_pressed);
 	}
 	</script>
